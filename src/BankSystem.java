@@ -1,122 +1,135 @@
 import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.List;
 
 public class BankSystem {
-    private static ArrayList<User> userList = new ArrayList<>();
-    private ArrayList<Account> accountsList;
+    private List<User> users;
+    private ArrayList<Account> accounts;
 
-    public static boolean login(String login){
-            for(int i = 0; i < userList.size(); i++){
-                if(login.equals(userList.get(i).getLogin())){
-                    return true;
-                }
-            }
-            return false;
+    public BankSystem() {
+        this.users = new ArrayList<>();
+        this.accounts = new ArrayList<>();
     }
 
-    public static void registerUser() throws UserException{
-        try (Scanner scan = new Scanner(System.in)) {
-            boolean loginbool = true;
-            boolean passwordbool = true;
-            boolean typebool = true;
-
-            String login = "";
-            String password = "";
-
-            while (loginbool) {
-                System.out.println("Plese write login: ");
-                login = scan.nextLine();
-                if(login(login)){   
-                    throw new UserException("Such login already exists: " + login);
-                }
-                loginbool = false;
-            }
-
-            while(passwordbool){
-                System.out.println("Plese write password: ");
-                boolean passwordCorrect = false;
-                String password1;
-                while (!passwordCorrect) {
-                    password = scan.nextLine();
-                    System.out.println("Plese confirm your password: ");
-                    password1 = scan.nextLine();
-                    if(password.equals(password1)){
-                        passwordCorrect = true;
-                    } else {
-                        throw new UserException("Passwords are different!");
-                    }
-                }
-                passwordbool = false;
-            }
-
-            System.out.println("Plese enter your account type: ");
-            boolean type = Boolean.parseBoolean(scan.nextLine());
-            while (typebool) {
-                if(type == true && userList.size() > 0){
-                    System.out.println("To do this, triple the administrator password, ");
-                    System.out.println("Enter the administrator login: ");
-                    String loginType = scan.nextLine();
-                    boolean adminFound = false;
-                    for(int i = 0; i < userList.size(); i++){
-                        if(loginType.equals(userList.get(i).getLogin())){
-                            adminFound = true;
-                            System.out.println("Plese write password: ");
-                            String passwordType = scan.nextLine();
-                            if(passwordType.equals(userList.get(i).getPassword())){
-                                System.out.println("Correct!");
-                                userList.add(new User(login, password, type));
-                                typebool = false;
-                            } else {
-                                throw new UserException("Incorrect password!");
-                            }
-                        } 
-                    }
-                    if (!adminFound) {
-                        throw new UserException("This is not an administrator!");
-                    }
-                } else{
-                    typebool = false;
-                    userList.add(new User(login, password, type));
-                }
-            } 
-            scan.close();
-        } 
+    public void registerUser(String login, String password, boolean isAdmin) {
+        User user = new User(login, password, isAdmin);
+        users.add(user);
     }
 
-    public static boolean loginUser() throws UserException{
-        try (Scanner scan = new Scanner(System.in)) {
-            System.out.println("Plese write login User: ");
-            String login = scan.nextLine();
-            boolean userFound = false;
-            for(int i = 0; i < userList.size(); i++){
-                if(login.equals(userList.get(i).getLogin())){
-                    userFound = true;
-                    System.out.println("Plese write password: ");
-                    String password = scan.nextLine();
-                    if(password.equals(userList.get(i).getPassword())){
-                        return true;
-                    } else {
-                        throw new UserException("Incorrect password!");
-                    }
-                }
+    public void loginUsers(String login, String password){
+        for(User user : users){
+            if(user.getLogin().equals(login) && user.validatePassword(password)){
+                System.out.println("User logged in");
+            } else {
+                System.out.println("Invalid login or password");
             }
-            if (!userFound) {
-                throw new UserException("Incorrect login");
-            }
-            scan.close();
-        }
-        return false;
-    }
-
-    public static void createAccount(){
-        try (Scanner scan = new Scanner(System.in)){
-            
         }
     }
 
+    public void createAccount(User user, String accountType) {
+        Account account = null;
+        if(accountType.equals("Savings")) {
+            account = new SavingsAccount(accounts.size());
+        } else if(accountType.equals("Checking")) {
+            account = new CheckingAccount(accounts.size());
+        }
+        user.addAccount(account);
+        accounts.add(account);
+    }
 
-    public static void main(String[] args) throws UserException {
-        registerUser();
-        System.out.println(loginUser());
+    public void deposit(User user, String accountNumber, double amount) {
+        Account account = null;
+        for(Account acc : user.getAccounts()) {
+            if(acc.getNumberAccount() == Integer.parseInt(accountNumber)) {
+                account = acc;
+                break;
+            }
+        }
+        if(account != null) {
+            account.deposit(amount);
+        }
+    }
+
+    public void withdraw(User user, String accountNumber, double amount) {
+        Account account = null;
+        for(Account acc : user.getAccounts()) {
+            if(acc.getNumberAccount() == Integer.parseInt(accountNumber)) {
+                account = acc;
+                break;
+            }
+        }
+        if(account != null) {
+            try {
+                account.withdraw(amount);
+            } catch (UserException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+    public void transfer(User sender, String fromAccount, String toAccount, double amount){
+        Account accountSender = null;
+        Account accountReceive = null;
+        for(Account acc : sender.getAccounts()) {
+            if(acc.getNumberAccount() == Integer.parseInt(fromAccount)) {
+                accountSender = acc;
+                break;
+            }
+        }
+        for(User user : users){
+            for(Account acc : user.getAccounts()){
+                if(acc.getNumberAccount() == Integer.parseInt(toAccount)){
+                    accountReceive = acc;
+                    break;
+                }
+            }
+        }
+        if(accountSender != null && accountReceive != null) {
+            try {
+                accountSender.withdraw(amount);
+                accountReceive.deposit(amount);
+            } catch (UserException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+    public void viewTransactionHistory(User user, String accountNumber){
+        Account account = null;
+        for(Account acc : user.getAccounts()) {
+            if(acc.getNumberAccount() == Integer.parseInt(accountNumber)) {
+                account = acc;
+                break;
+            }
+        }
+        if(account != null) {
+            for(Transaction transaction : account.getTransactions()) {
+                transaction.getTransactionDetails();
+            }
+        }
+    }
+
+    public User getUserByLogin(String login) {
+        for (User user : users) {
+            if (user.getLogin().equals(login)) {
+                return user;
+            }
+        }
+        return null;
+    }
+    
+    public void deleteUser(String login) {
+        User userToDelete = null;
+        for (User user : users) {
+            if (user.getLogin().equals(login)) {
+                userToDelete = user;
+                break;
+            }
+        }
+        if (userToDelete != null) {
+            users.remove(userToDelete);
+            for (Account account : userToDelete.getAccounts()) {
+                accounts.remove(account);
+            }
+        }
     }
 }

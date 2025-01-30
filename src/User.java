@@ -1,15 +1,29 @@
 import java.util.ArrayList;
+import java.util.List;
 
-public class User {
-    private String login; // Login
-    private String password; // Password
-    private boolean typeUser; //Default user - False, Admin - True
-    private ArrayList<Account> AccounList;
+public class User {    
+    private String login;
+    private String password;
+    private List<Account> accounts;
+    private boolean isAdmin;
 
-    public User(String login, String password, boolean typeUser) {
+    public User(String login, String password, boolean isAdmin) {
         this.login = login;
         this.password = password;
-        this.typeUser = typeUser;
+        this.isAdmin = isAdmin;
+        this.accounts = new ArrayList<>();
+    }
+
+    public void addAccount(Account account) {
+        accounts.add(account);
+    }
+
+    public List<Account> getAccounts() {
+        return accounts;
+    }
+
+    public boolean validatePassword(String password) {
+        return this.password.equals(password);
     }
 
     public String getLogin() {
@@ -28,23 +42,17 @@ public class User {
         this.password = password;
     }
 
-    public boolean isTypeUser() {
-        return typeUser;
+    public void setAccounts(List<Account> accounts) {
+        this.accounts = accounts;
     }
 
-    public void setTypeUser(boolean typeUser) {
-        this.typeUser = typeUser;
+    public boolean isAdmin() {
+        return isAdmin;
     }
 
-    public ArrayList<Account> getAccounList() {
-        return AccounList;
+    public void setAdmin(boolean isAdmin) {
+        this.isAdmin = isAdmin;
     }
-
-    public void setAccounList(ArrayList<Account> accounList) {
-        AccounList = accounList;
-    }
-
-    
 
     
 }
